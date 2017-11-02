@@ -27,6 +27,9 @@ package com.mimacom.liferay.portal.setup.core.util;
  */
 
 import com.liferay.asset.kernel.model.AssetEntry;
+import com.liferay.document.library.kernel.model.DLFolder;
+import com.liferay.document.library.kernel.service.DLAppLocalServiceUtil;
+import com.liferay.document.library.kernel.service.DLFolderLocalServiceUtil;
 import com.liferay.document.library.kernel.util.DLUtil;
 import com.liferay.dynamic.data.lists.model.DDLRecordSet;
 import com.liferay.dynamic.data.lists.service.DDLRecordSetLocalServiceUtil;
@@ -73,6 +76,7 @@ public final class ResolverUtil {
     private static final String FILE_REFERENCE_ID = "{{$FILE-ID=";
     private static final String FILE_REFERENCE_UUID = "{{$FILE-UUID=";
     private static final String CLASS_ID_BY_NAME = "{{$CLASS-ID-BY-NAME=";
+    private static final String FOLDER_BY_NAME = "{$FOLDER-ID=";
     private static final String PAGE_ID_BY_FRIENDLY_URL = "{{$%%PTYPE%%-PAGE-%%LAYOUTID%%-BY-FRIENDLY_URL=";
     private static final String DDL_REC_SET_BY_KEY = "{{$DDL-REC-SET-ID-BY-KEY=";
 
@@ -135,6 +139,7 @@ public final class ResolverUtil {
      * <li>{{ID_OF_USER_GROUP_WITH_NAME=&lt; name of the user group &gt;$}}</li>
      * <li>{{UUDID_OF_USER_GROUP_WITH_NAME=&lt; name of the user group &gt;$}}
      * </li>
+     * <li>{$FOLDER-ID=[:: name of the site ::]&lt; documents and media folder path&gt;$}</li>
      * </ul>
      *
      * @param runAsUserId  The user id under which the look up is done.
@@ -221,6 +226,9 @@ public final class ResolverUtil {
         retVal = lookupOrgOrUserGroupIdWithName(resolverHint, retVal, company, false, true);
         // replace uuid of orgs
         retVal = lookupOrgOrUserGroupIdWithName(resolverHint, retVal, company, true, true);
+        //Replace folderPath for folderId
+        retVal=lookUpFolderIdWithPath(retVal, resolverHint, groupId, company);
+
         return retVal;
     }
 
@@ -366,6 +374,53 @@ public final class ResolverUtil {
             }
             pos = result.indexOf(openingTag, pos + 1);
         }
+        return result;
+    }
+
+    public static String lookUpFolderIdWithPath(final String content,
+            final String locationHint,final long groupId,final long companyId){
+
+        String result=content;
+
+
+        String lookUp = FOLDER_BY_NAME;
+        int pos = result.indexOf(lookUp);
+        while (pos > -1) {
+            int pos2 = result.indexOf(CLOSING_TAG, pos);
+            if (pos2 < 0) {
+                LOG.error("No closing Tag, pos " + pos + " for " + locationHint);
+                break;
+            } else {
+
+                String folderPath = result.substring(pos + lookUp.length(), pos2).trim();
+                long parentFolderId=0;
+                String[] folders=folderPath.split("/");
+                for(String folderName:folders){
+                    if (folderName!=null && !folderName.isEmpty()) {
+                        DLFolder folder = DLFolderLocalServiceUtil.fetchFolder(groupId, parentFolderId, folderName);
+                        if (folder == null) {
+                            LOG.error("Folder not found " + folderName+ " in groupId "+groupId);
+                            break;
+                        } else {
+                            parentFolderId = folder.getFolderId();
+
+                        }
+                    }
+                }
+                if(parentFolderId==0){
+                    LOG.error("Folder "+folderPath+" Not found , returning root folder ID");
+                }
+                result = result.substring(0, pos-1) + parentFolderId + result.substring(pos2 + CLOSING_TAG.length(), result.length());
+
+
+
+            }
+            pos = result.indexOf(lookUp, pos + 1);
+        }
+
+
+
+
         return result;
     }
 

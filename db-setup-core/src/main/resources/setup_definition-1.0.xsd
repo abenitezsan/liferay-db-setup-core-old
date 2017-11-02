@@ -226,6 +226,8 @@
                     </li>
                     <li>{{$FILE-ID=[:: name of the site ::]&lt; documents and media folder path to the file &gt;&lt; documents and media folder title of the file &gt;$}}
                     </li>
+                    <li>{{$FOLDER-ID=&lt; documents and media folder path&gt;$}}
+                    </li>
                     <li>{{$FILE-UUID=[:: name of the site ::]&lt; documents and media folder path to the file &gt;&lt; documents and media folder title of the file &gt;$}}
                     </li>
                     <li>{{$CLASS-ID-BY-NAME=&lt; fully qualified class name &gt;$}}</li>
