@@ -55,6 +55,7 @@ import javax.portlet.ReadOnlyException;
 import javax.portlet.ValidatorException;
 import java.io.IOException;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Locale;
@@ -471,10 +472,26 @@ public final class SetupPages {
 
             javax.portlet.PortletPreferences preferences = PortletPreferencesLocalServiceUtil.getPreferences(companyId, ownerId, ownerType, plid, portletIdInc);
             List<PortletPreference> prefsList = portlet.getPortletPreference();
+            Map<String,List<String>> prefsKeysUsed=new HashMap<String,List<String>>();
             for (PortletPreference p : prefsList) {
                 try {
-                    preferences.setValue(p.getKey(), resolvePortletPrefValue(p.getKey(), p.getValue(),
-                            portlet, companyId, groupId, runAsUserId));
+
+                    String key=p.getKey();
+                    String value= resolvePortletPrefValue(p.getKey(), p.getValue(),
+                            portlet, companyId, groupId, runAsUserId);
+                    if(prefsKeysUsed.containsKey(key)){
+                       List<String> values=prefsKeysUsed.get(key);
+                       values.add(value);
+                       preferences.setValues(key,values.stream().toArray(String[]::new));
+                    }else{
+                        List<String> values=new ArrayList<String>();
+                        values.add(value);
+                        prefsKeysUsed.put(key,values);
+                        preferences.setValue(key,value);
+                    }
+
+
+
                 } catch (ReadOnlyException e) {
                     LOG.error("Portlet preferences (" + p.getKey() + ", " + p.getValue() + ") of "
                             + "portlet " + portlet.getPortletId() + " caused an excpetion! ");
