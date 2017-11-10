@@ -121,7 +121,7 @@ public final class SetupPages {
             }
             if (publicPages.isDeleteExistingPages()) {
                 LOG.info("Setup: Deleting pages from organization " + organization.getName());
-                deletePages(groupId);
+                deletePages(groupId, false);
             }
             addPages(publicPages.getPage(), publicPages.getDefaultLayout(), publicPages.getDefaultLayoutContainedInThemeWithId(),
                     groupId, false, 0, company, userid);
@@ -137,7 +137,7 @@ public final class SetupPages {
             }
             if (privatePages.isDeleteExistingPages()) {
                 LOG.info("Setup: Deleting pages from organization " + organization.getName());
-                deletePages(groupId);
+                deletePages(groupId, true);
             }
             addPages(privatePages.getPage(), privatePages.getDefaultLayout(), privatePages.getDefaultLayoutContainedInThemeWithId(),
                     groupId, true, 0, company, userid);
@@ -632,11 +632,11 @@ public final class SetupPages {
         }
     }
 
-    private static void deletePages(final long groupId) {
+    private static void deletePages(final long groupId, boolean privateLayout) {
 
         ServiceContext serviceContext = new ServiceContext();
         try {
-            LayoutLocalServiceUtil.deleteLayouts(groupId, false, serviceContext);
+            LayoutLocalServiceUtil.deleteLayouts(groupId, privateLayout, serviceContext);
             LOG.info("Setup: Pages removed.");
         } catch (PortalException | SystemException e) {
             LOG.error("cannot remove pages: " + e);
